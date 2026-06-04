@@ -1,5 +1,6 @@
 package com.example.ai
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.util.Base64
 import com.example.BuildConfig
@@ -93,8 +94,13 @@ fun Bitmap.toBase64(): String {
     return Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
 }
 
-suspend fun analyzeImageWithGemini(bitmap: Bitmap, prompt: String): String = withContext(Dispatchers.IO) {
-    val apiKey = BuildConfig.GEMINI_API_KEY
+suspend fun analyzeImageWithGemini(context: Context, bitmap: Bitmap, prompt: String): String = withContext(Dispatchers.IO) {
+    val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    var apiKey = prefs.getString("gemini_api_key", "") ?: ""
+    if (apiKey.isBlank() || apiKey == "MY_GEMINI_API_KEY") {
+        apiKey = BuildConfig.GEMINI_API_KEY
+    }
+    
     if (apiKey.isBlank() || apiKey == "MY_GEMINI_API_KEY") {
         return@withContext "Error: Gemini API Key not configured. Please set it in Settings."
     }

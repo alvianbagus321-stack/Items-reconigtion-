@@ -10,8 +10,8 @@ import com.example.ui.screens.home.HomeScreen
 import com.example.ui.screens.camera.CameraScreen
 import com.example.ui.screens.item.AddItemScreen
 import com.example.ui.screens.item.ItemDetailScreen
-
 import com.example.ui.screens.group.GroupsScreen
+import com.example.ui.screens.settings.SettingsScreen
 
 @Composable
 fun AppNavGraph() {
@@ -23,6 +23,9 @@ fun AppNavGraph() {
         }
         composable("groups") {
             GroupsScreen(navController = navController)
+        }
+        composable("settings") {
+            SettingsScreen(navController = navController)
         }
         composable("camera") {
             CameraScreen(navController = navController)

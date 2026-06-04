@@ -89,6 +89,13 @@ fun HomeScreen(
                                 importLauncher.launch(arrayOf("application/json", "*/*"))
                             }
                         )
+                        DropdownMenuItem(
+                            text = { Text("Settings") },
+                            onClick = {
+                                showMenu = false
+                                navController.navigate("settings")
+                            }
+                        )
                     }
                 }
             )

@@ -49,7 +49,7 @@ class AddItemViewModel : ViewModel() {
                 val inputStream = context.contentResolver.openInputStream(uri)
                 val bitmap = BitmapFactory.decodeStream(inputStream)
                 if (bitmap != null) {
-                    val description = analyzeImageWithGemini(bitmap, "What is this item? Give a short, concise description and attempt to infer its name.")
+                    val description = analyzeImageWithGemini(context, bitmap, "What is this item? Give a short, concise description and attempt to infer its name.")
                     _uiState.value = _uiState.value.copy(
                         description = description,
                         isAnalyzing = false
