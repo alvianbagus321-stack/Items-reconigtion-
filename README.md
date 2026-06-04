@@ -2,6 +2,7 @@
 https://ko-fi.com/alvianbagus321gmailcom
 
 <img width="720" height="1600" alt="Screenshot_20260604-201531_transfer_2026-06-04_201650" src="https://github.com/user-attachments/assets/84dabcca-32cd-440a-9da3-3e4ae52a92a6" />
+this is the inventory this is whre the items data will be stored and u can add group data to group your items
 <img width="720" height="1600" alt="Screenshot_20260604-201624_transfer_2026-06-04_201650" src="https://github.com/user-attachments/assets/1878e04a-d09f-4cfa-b67c-baa4bbd755ae" />
 <img width="720" height="1600" alt="Screenshot_20260604-201608_transfer_2026-06-04_201650" src="https://github.com/user-attachments/assets/604466e8-8ef1-4906-84a4-c6afccd4aaa3" />
 <img width="720" height="1600" alt="Screenshot_20260604-201521_transfer_2026-06-04_201650" src="https://github.com/user-attachments/assets/03f81495-7235-4266-accc-bff8b25959e4" />
@@ -89,3 +90,5 @@ Updated the AppNavGraph navigation parameter system to properly carry the "initi
 U have to generate google api key to get the ai running
 Open the setting option and put the key there
 Save the key and ready to use
+https://aistudio.google.com/app/apikey
+here is the link to generate the key
