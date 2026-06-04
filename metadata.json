@@ -1,0 +1,6 @@
+{
+  "name": "Smart Inventory",
+  "description": "Smart Inventory & Visual Recognition App using Gemini",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

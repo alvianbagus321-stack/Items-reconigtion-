@@ -1,0 +1,157 @@
+package com.example.ui.screens.camera
+
+import android.net.Uri
+import android.os.Build
+import android.util.Log
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.navigation.NavController
+import com.example.utils.FileUtils
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.google.accompanist.permissions.rememberPermissionState
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun CameraScreen(navController: NavController) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    
+    var imageCapture: ImageCapture? by remember { mutableStateOf(null) }
+
+    val permissionsToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        listOf(
+            android.Manifest.permission.CAMERA,
+            android.Manifest.permission.READ_MEDIA_IMAGES
+        )
+    } else {
+        listOf(
+            android.Manifest.permission.CAMERA,
+            android.Manifest.permission.READ_EXTERNAL_STORAGE
+        )
+    }
+
+    val multiplePermissionsState = rememberMultiplePermissionsState(permissionsToRequest)
+    var showPermissionDialog by remember { mutableStateOf(!multiplePermissionsState.allPermissionsGranted) }
+
+    if (showPermissionDialog) {
+        AlertDialog(
+            onDismissRequest = { /* Require decision */ },
+            title = { Text("Permissions Required") },
+            text = { Text("Smart Inventory needs access to your camera and storage to take photos of items and save them to your inventory.") },
+            confirmButton = {
+                TextButton(onClick = { 
+                    multiplePermissionsState.launchMultiplePermissionRequest()
+                    showPermissionDialog = false
+                }) {
+                    Text("Grant")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showPermissionDialog = false
+                    navController.popBackStack()
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (multiplePermissionsState.allPermissionsGranted) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            AndroidView(
+                factory = { ctx ->
+                    val previewView = PreviewView(ctx)
+                    val executor = ContextCompat.getMainExecutor(ctx)
+                    cameraProviderFuture.addListener({
+                        val cameraProvider = cameraProviderFuture.get()
+                        val preview = Preview.Builder().build().also {
+                            it.setSurfaceProvider(previewView.surfaceProvider)
+                        }
+                        
+                        imageCapture = ImageCapture.Builder()
+                            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                            .build()
+
+                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                        try {
+                            cameraProvider.unbindAll()
+                            cameraProvider.bindToLifecycle(
+                                lifecycleOwner,
+                                cameraSelector,
+                                preview,
+                                imageCapture
+                            )
+                        } catch (exc: Exception) {
+                            Log.e("CameraScreen", "Use case binding failed", exc)
+                        }
+                    }, executor)
+                    previewView
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+
+            FloatingActionButton(
+                onClick = {
+                    val fileUri = FileUtils.getTempImageUri(context)
+                    val file = java.io.File(context.cacheDir, "temp_image.jpg")
+                    val outputFileOptions = ImageCapture.OutputFileOptions.Builder(file).build()
+
+                    imageCapture?.takePicture(
+                        outputFileOptions,
+                        ContextCompat.getMainExecutor(context),
+                        object : ImageCapture.OnImageSavedCallback {
+                            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                                val finalUri = Uri.fromFile(file).toString()
+                                val encodedUri = java.net.URLEncoder.encode(finalUri, "utf-8")
+                                navController.navigate("add_item?imageUri=$encodedUri")
+                            }
+                            override fun onError(exc: ImageCaptureException) {
+                                Log.e("CameraScreen", "Photo capture failed: ${exc.message}", exc)
+                            }
+                        }
+                    )
+                },
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp).testTag("capture_button")
+            ) {
+                Icon(Icons.Filled.CameraAlt, contentDescription = "Take Photo")
+            }
+        }
+    } else {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
+                Icon(Icons.Filled.CameraAlt, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Camera Permission Required", style = MaterialTheme.typography.titleLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Smart Inventory needs access to your camera to scan items and use AI recognition.", textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(onClick = { multiplePermissionsState.launchMultiplePermissionRequest() }) {
+                    Text("Grant Permission")
+                }
+            }
+        }
+    }
+}
