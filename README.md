@@ -82,4 +82,3 @@ Updated the AppNavGraph navigation parameter system to properly carry the "initi
 U have to generate google api key to get the ai running
 Open the setting option and put the key there
 Save the key and ready to use
-1780574781320
