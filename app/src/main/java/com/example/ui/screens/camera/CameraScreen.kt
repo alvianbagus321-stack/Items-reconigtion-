@@ -31,6 +31,12 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
 
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material.icons.filled.Inventory
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.foundation.clickable
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -40,6 +46,7 @@ fun CameraScreen(navController: NavController, mode: String = "add") {
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     
     var imageCapture: ImageCapture? by remember { mutableStateOf(null) }
+    var selectedSearchMode by remember { mutableStateOf("data") }
 
     val permissionsToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         listOf(
@@ -56,13 +63,13 @@ fun CameraScreen(navController: NavController, mode: String = "add") {
     val multiplePermissionsState = rememberMultiplePermissionsState(permissionsToRequest)
     var showPermissionDialog by remember { mutableStateOf(!multiplePermissionsState.allPermissionsGranted) }
 
-    val galleryLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            val galleryLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
             val encodedUri = java.net.URLEncoder.encode(uri.toString(), "utf-8")
             if (mode == "search") {
-                navController.navigate("visual_search?imageUri=$encodedUri") { popUpTo("home") }
+                navController.navigate("visual_search?imageUri=$encodedUri&initialMode=$selectedSearchMode") { popUpTo("home") }
             } else {
                 navController.navigate("add_item?imageUri=$encodedUri") { popUpTo("home") }
             }
@@ -128,58 +135,132 @@ fun CameraScreen(navController: NavController, mode: String = "add") {
                 modifier = Modifier.fillMaxSize()
             )
 
-            Row(
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .padding(bottom = 32.dp, start = 32.dp, end = 32.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                FloatingActionButton(
-                    onClick = {
-                        galleryLauncher.launch(
-                            androidx.activity.result.PickVisualMediaRequest(
-                                androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly
-                            )
-                        )
-                    },
-                    modifier = Modifier.size(56.dp)
-                ) {
-                    Icon(Icons.Filled.Folder, contentDescription = "Gallery")
-                }
-
-                FloatingActionButton(
-                    onClick = {
-                        val fileUri = FileUtils.getTempImageUri(context)
-                        val file = java.io.File(context.cacheDir, "temp_image.jpg")
-                        val outputFileOptions = ImageCapture.OutputFileOptions.Builder(file).build()
-
-                        imageCapture?.takePicture(
-                            outputFileOptions,
-                            ContextCompat.getMainExecutor(context),
-                            object : ImageCapture.OnImageSavedCallback {
-                                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                                    val finalUri = Uri.fromFile(file).toString()
-                                    val encodedUri = java.net.URLEncoder.encode(finalUri, "utf-8")
-                                    if (mode == "search") {
-                                        navController.navigate("visual_search?imageUri=$encodedUri") { popUpTo("home") }
-                                    } else {
-                                        navController.navigate("add_item?imageUri=$encodedUri") { popUpTo("home") }
-                                    }
-                                }
-                                override fun onError(exc: ImageCaptureException) {
-                                    Log.e("CameraScreen", "Photo capture failed: ${exc.message}", exc)
+                if (mode == "search") {
+                    Surface(
+                        color = Color.Black.copy(alpha = 0.6f),
+                        shape = RoundedCornerShape(24.dp),
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .wrapContentWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                color = if (selectedSearchMode == "data") MaterialTheme.colorScheme.primary else Color.Transparent,
+                                shape = RoundedCornerShape(20.dp),
+                                modifier = Modifier
+                                    .clickable { selectedSearchMode = "data" }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Inventory,
+                                        contentDescription = null,
+                                        tint = if (selectedSearchMode == "data") MaterialTheme.colorScheme.onPrimary else Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Mode Data",
+                                        color = if (selectedSearchMode == "data") MaterialTheme.colorScheme.onPrimary else Color.White,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
-                        )
-                    },
-                    modifier = Modifier.size(72.dp).testTag("capture_button")
-                ) {
-                    Icon(Icons.Filled.CameraAlt, contentDescription = "Take Photo", modifier = Modifier.size(32.dp))
+                            
+                            Spacer(modifier = Modifier.width(4.dp))
+                            
+                            Surface(
+                                color = if (selectedSearchMode == "online") MaterialTheme.colorScheme.primary else Color.Transparent,
+                                shape = RoundedCornerShape(20.dp),
+                                modifier = Modifier
+                                    .clickable { selectedSearchMode = "online" }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Language,
+                                        contentDescription = null,
+                                        tint = if (selectedSearchMode == "online") MaterialTheme.colorScheme.onPrimary else Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Mode Online",
+                                        color = if (selectedSearchMode == "online") MaterialTheme.colorScheme.onPrimary else Color.White,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
-                
-                Spacer(modifier = Modifier.size(56.dp)) 
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    FloatingActionButton(
+                        onClick = {
+                            galleryLauncher.launch(
+                                androidx.activity.result.PickVisualMediaRequest(
+                                    androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly
+                                )
+                            )
+                        },
+                        modifier = Modifier.size(56.dp)
+                    ) {
+                        Icon(Icons.Filled.Folder, contentDescription = "Gallery")
+                    }
+
+                    FloatingActionButton(
+                        onClick = {
+                            val fileUri = FileUtils.getTempImageUri(context)
+                            val file = java.io.File(context.cacheDir, "temp_image.jpg")
+                            val outputFileOptions = ImageCapture.OutputFileOptions.Builder(file).build()
+
+                            imageCapture?.takePicture(
+                                outputFileOptions,
+                                ContextCompat.getMainExecutor(context),
+                                object : ImageCapture.OnImageSavedCallback {
+                                    override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                                        val finalUri = Uri.fromFile(file).toString()
+                                        val encodedUri = java.net.URLEncoder.encode(finalUri, "utf-8")
+                                        if (mode == "search") {
+                                            navController.navigate("visual_search?imageUri=$encodedUri&initialMode=$selectedSearchMode") { popUpTo("home") }
+                                        } else {
+                                            navController.navigate("add_item?imageUri=$encodedUri") { popUpTo("home") }
+                                        }
+                                    }
+                                    override fun onError(exc: ImageCaptureException) {
+                                        Log.e("CameraScreen", "Photo capture failed: ${exc.message}", exc)
+                                    }
+                                }
+                            )
+                        },
+                        modifier = Modifier.size(72.dp).testTag("capture_button")
+                    ) {
+                        Icon(Icons.Filled.CameraAlt, contentDescription = "Take Photo", modifier = Modifier.size(32.dp))
+                    }
+                    
+                    Spacer(modifier = Modifier.size(56.dp)) 
+                }
             }
         }
     } else {

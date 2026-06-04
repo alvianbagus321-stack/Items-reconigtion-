@@ -32,11 +32,22 @@ fun AppNavGraph() {
             CameraScreen(navController = navController, mode = mode)
         }
         composable(
-            "visual_search?imageUri={imageUri}",
-            arguments = listOf(navArgument("imageUri") { type = NavType.StringType })
+            "visual_search?imageUri={imageUri}&initialMode={initialMode}",
+            arguments = listOf(
+                navArgument("imageUri") { type = NavType.StringType },
+                navArgument("initialMode") { 
+                    type = NavType.StringType
+                    defaultValue = "data"
+                }
+            )
         ) { backStackEntry ->
             val imageUri = backStackEntry.arguments?.getString("imageUri") ?: ""
-            VisualSearchScreen(navController = navController, imageUri = imageUri)
+            val initialMode = backStackEntry.arguments?.getString("initialMode") ?: "data"
+            VisualSearchScreen(
+                navController = navController,
+                imageUri = imageUri,
+                initialMode = initialMode
+            )
         }
         composable("add_item?imageUri={imageUri}") { backStackEntry ->
             val imageUri = backStackEntry.arguments?.getString("imageUri")
