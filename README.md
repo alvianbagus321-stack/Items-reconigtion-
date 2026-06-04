@@ -8,6 +8,10 @@ this is the inteface for the item data save to have save the data for you
 <img width="720" height="1600" alt="Screenshot_20260604-201608_transfer_2026-06-04_201650" src="https://github.com/user-attachments/assets/604466e8-8ef1-4906-84a4-c6afccd4aaa3" />
 this is the icon photo on the searchbar this is for searching
 <img width="720" height="1600" alt="Screenshot_20260604-201521_transfer_2026-06-04_201650" src="https://github.com/user-attachments/assets/03f81495-7235-4266-accc-bff8b25959e4" />
+this is the setting interface it located one the top section **:**
+this is where u can pu the gemini api key tutorial on the bottom
+and in here you can change the background using photo or template colors
+
 **you can support me or buy my commision here☺️**
 https://ko-fi.com/alvianbagus321gmailcom
 
