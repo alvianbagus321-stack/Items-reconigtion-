@@ -4,7 +4,9 @@ https://ko-fi.com/alvianbagus321gmailcom
 <img width="720" height="1600" alt="Screenshot_20260604-201531_transfer_2026-06-04_201650" src="https://github.com/user-attachments/assets/84dabcca-32cd-440a-9da3-3e4ae52a92a6" />
 this is the inventory this is whre the items data will be stored and u can add group data to group your items the photo icon on top is fo searching the items using your data or using online mode and the photo icon on below is to save data so the ai can reconigtion the items 
 <img width="720" height="1600" alt="Screenshot_20260604-201624_transfer_2026-06-04_201650" src="https://github.com/user-attachments/assets/1878e04a-d09f-4cfa-b67c-baa4bbd755ae" />
+this is the inteface for the item data save to have save the data for you
 <img width="720" height="1600" alt="Screenshot_20260604-201608_transfer_2026-06-04_201650" src="https://github.com/user-attachments/assets/604466e8-8ef1-4906-84a4-c6afccd4aaa3" />
+this is the icon photo on the searchbar this is for searching
 <img width="720" height="1600" alt="Screenshot_20260604-201521_transfer_2026-06-04_201650" src="https://github.com/user-attachments/assets/03f81495-7235-4266-accc-bff8b25959e4" />
 **you can support me or buy my commision here☺️**
 https://ko-fi.com/alvianbagus321gmailcom
