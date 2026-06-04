@@ -96,9 +96,9 @@ fun Bitmap.toBase64(): String {
 
 suspend fun analyzeImageWithGemini(context: Context, bitmap: Bitmap, prompt: String): String = withContext(Dispatchers.IO) {
     val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
-    var apiKey = prefs.getString("gemini_api_key", "") ?: ""
+    var apiKey = prefs.getString("gemini_api_key", "")?.trim() ?: ""
     if (apiKey.isBlank() || apiKey == "MY_GEMINI_API_KEY") {
-        apiKey = BuildConfig.GEMINI_API_KEY
+        apiKey = BuildConfig.GEMINI_API_KEY.trim()
     }
     
     if (apiKey.isBlank() || apiKey == "MY_GEMINI_API_KEY") {
