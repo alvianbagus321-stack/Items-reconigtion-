@@ -24,6 +24,12 @@ class HomeViewModel : ViewModel() {
     val searchQuery: StateFlow<String> = _searchQuery
 
     val items: StateFlow<List<ItemEntity>> = repository.allItems
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val groups: StateFlow<List<com.example.data.local.GroupEntity>> = repository.allGroups
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val filteredItems: StateFlow<List<ItemEntity>> = repository.allItems
         .combine(_searchQuery) { allItems, query ->
             if (query.isBlank()) {
                 allItems
@@ -37,6 +43,22 @@ class HomeViewModel : ViewModel() {
 
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
+    }
+
+    fun createGroup(name: String, description: String) {
+        viewModelScope.launch {
+            repository.insertGroup(com.example.data.local.GroupEntity(
+                id = java.util.UUID.randomUUID().toString(),
+                name = name,
+                description = description
+            ))
+        }
+    }
+
+    fun deleteGroup(groupId: String) {
+        viewModelScope.launch {
+            repository.deleteGroup(groupId)
+        }
     }
 
     fun exportData(context: Context, uri: Uri, onResult: (Boolean) -> Unit) {

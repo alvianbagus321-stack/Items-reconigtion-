@@ -57,7 +57,7 @@ data class Candidate(
 // --- API Service ---
 
 interface GeminiApiService {
-    @POST("v1beta/models/gemini-2.5-flash-preview-12-2025:generateContent")
+    @POST("v1beta/models/gemini-1.5-flash:generateContent")
     suspend fun generateContent(
         @Query("key") apiKey: String,
         @Body request: GenerateContentRequest
@@ -105,11 +105,12 @@ suspend fun analyzeImageWithGemini(context: Context, bitmap: Bitmap, prompt: Str
         return@withContext "Error: Gemini API Key not configured. Please set it in Settings."
     }
     
+    val fullPrompt = "You are a helpful inventory assistant. Describe the objects in the image accurately so the user can catalog them. Keep descriptions concise. \n\n" + prompt
+    
     val requestBody = GenerateContentRequest(
-        systemInstruction = Content(listOf(Part(text = "You are a helpful inventory assistant. Describe the objects in the image accurately so the user can catalog them. Keep descriptions concise."))),
         contents = listOf(Content(
             parts = listOf(
-                Part(text = prompt),
+                Part(text = fullPrompt),
                 Part(inlineData = InlineData(mimeType = "image/jpeg", data = bitmap.toBase64()))
             )
         ))
@@ -118,6 +119,13 @@ suspend fun analyzeImageWithGemini(context: Context, bitmap: Bitmap, prompt: Str
     try {
         val response = GeminiClient.service.generateContent(apiKey, requestBody)
         response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text ?: "No objects detected."
+    } catch (e: retrofit2.HttpException) {
+        val errorBody = e.response()?.errorBody()?.string() ?: ""
+        if (e.code() == 400 || e.code() == 403 || e.code() == 404) {
+            "Error: API Key is likely invalid or missing. Please configure a valid Gemini API Key in Settings. (${e.code()})"
+        } else {
+            "Error parsing image: HTTP ${e.code()} - $errorBody"
+        }
     } catch (e: Exception) {
         "Error parsing image: ${e.message}"
     }

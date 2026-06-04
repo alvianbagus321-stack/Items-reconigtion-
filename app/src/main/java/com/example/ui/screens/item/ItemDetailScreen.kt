@@ -24,7 +24,9 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.di.AppContainer
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
@@ -33,11 +35,23 @@ class ItemDetailViewModel : ViewModel() {
     private val _itemState = MutableStateFlow<com.example.data.local.ItemEntity?>(null)
     val itemState: StateFlow<com.example.data.local.ItemEntity?> = _itemState
 
+    val allGroups: StateFlow<List<com.example.data.local.GroupEntity>> = repository.allGroups
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     fun loadItem(id: String) {
         viewModelScope.launch {
             repository.getItemById(id).collect { item ->
                 _itemState.value = item
             }
+        }
+    }
+
+    fun updateItemGroup(itemId: String, groupId: String?) {
+        viewModelScope.launch {
+            val currentItem = _itemState.value ?: return@launch
+            val updated = currentItem.copy(groupId = groupId)
+            repository.insertItem(updated)
+            _itemState.value = updated
         }
     }
 
@@ -89,6 +103,8 @@ fun ItemDetailScreen(
                     listOf(nonNullItem.mainImageUri)
                 }
 
+                val currency by com.example.ui.screens.settings.SettingsManager.currency.collectAsState()
+
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(images) { uri ->
                         AsyncImage(
@@ -103,12 +119,45 @@ fun ItemDetailScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 Text("Price", style = MaterialTheme.typography.labelMedium)
-                Text("$${String.format("%.2f", nonNullItem.price)}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text("$currency ${if(nonNullItem.price % 1.0 == 0.0) nonNullItem.price.toLong().toString() else String.format("%.2f", nonNullItem.price)}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text("Description", style = MaterialTheme.typography.labelMedium)
                 Text(nonNullItem.description, style = MaterialTheme.typography.bodyLarge)
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                val groups by viewModel.allGroups.collectAsState()
+                var expandedDropdown by remember { mutableStateOf(false) }
+
+                Text("Group", style = MaterialTheme.typography.labelMedium)
+                Box {
+                    OutlinedButton(onClick = { expandedDropdown = true }) {
+                        val currentGroup = groups.find { it.id == nonNullItem.groupId }
+                        Text(currentGroup?.name ?: "None")
+                    }
+                    DropdownMenu(
+                        expanded = expandedDropdown,
+                        onDismissRequest = { expandedDropdown = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("None") },
+                            onClick = {
+                                viewModel.updateItemGroup(nonNullItem.id, null)
+                                expandedDropdown = false
+                            }
+                        )
+                        groups.forEach { group ->
+                            DropdownMenuItem(
+                                text = { Text(group.name) },
+                                onClick = {
+                                    viewModel.updateItemGroup(nonNullItem.id, group.id)
+                                    expandedDropdown = false
+                                }
+                            )
+                        }
+                    }
+                }
                 
                 Spacer(modifier = Modifier.height(32.dp))
                 

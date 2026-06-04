@@ -15,7 +15,7 @@ object AppContainer {
                 context.applicationContext,
                 AppDatabase::class.java,
                 "smart_inventory_db"
-            ).build()
+            ).fallbackToDestructiveMigration().build()
             inventoryRepository = InventoryRepository(database!!.inventoryDao())
         }
     }

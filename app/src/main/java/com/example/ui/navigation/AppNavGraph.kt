@@ -10,8 +10,8 @@ import com.example.ui.screens.home.HomeScreen
 import com.example.ui.screens.camera.CameraScreen
 import com.example.ui.screens.item.AddItemScreen
 import com.example.ui.screens.item.ItemDetailScreen
-import com.example.ui.screens.group.GroupsScreen
 import com.example.ui.screens.settings.SettingsScreen
+import com.example.ui.screens.search.VisualSearchScreen
 
 @Composable
 fun AppNavGraph() {
@@ -21,14 +21,22 @@ fun AppNavGraph() {
         composable("home") {
             HomeScreen(navController = navController)
         }
-        composable("groups") {
-            GroupsScreen(navController = navController)
-        }
         composable("settings") {
             SettingsScreen(navController = navController)
         }
-        composable("camera") {
-            CameraScreen(navController = navController)
+        composable(
+            "camera?mode={mode}",
+            arguments = listOf(navArgument("mode") { defaultValue = "add" })
+        ) { backStackEntry ->
+            val mode = backStackEntry.arguments?.getString("mode") ?: "add"
+            CameraScreen(navController = navController, mode = mode)
+        }
+        composable(
+            "visual_search?imageUri={imageUri}",
+            arguments = listOf(navArgument("imageUri") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val imageUri = backStackEntry.arguments?.getString("imageUri") ?: ""
+            VisualSearchScreen(navController = navController, imageUri = imageUri)
         }
         composable("add_item?imageUri={imageUri}") { backStackEntry ->
             val imageUri = backStackEntry.arguments?.getString("imageUri")

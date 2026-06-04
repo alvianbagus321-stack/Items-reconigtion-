@@ -17,7 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -30,9 +30,11 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
 
+import androidx.compose.material.icons.filled.Folder
+
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun CameraScreen(navController: NavController) {
+fun CameraScreen(navController: NavController, mode: String = "add") {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
@@ -53,6 +55,19 @@ fun CameraScreen(navController: NavController) {
 
     val multiplePermissionsState = rememberMultiplePermissionsState(permissionsToRequest)
     var showPermissionDialog by remember { mutableStateOf(!multiplePermissionsState.allPermissionsGranted) }
+
+    val galleryLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            val encodedUri = java.net.URLEncoder.encode(uri.toString(), "utf-8")
+            if (mode == "search") {
+                navController.navigate("visual_search?imageUri=$encodedUri") { popUpTo("home") }
+            } else {
+                navController.navigate("add_item?imageUri=$encodedUri") { popUpTo("home") }
+            }
+        }
+    }
 
     if (showPermissionDialog) {
         AlertDialog(
@@ -113,30 +128,58 @@ fun CameraScreen(navController: NavController) {
                 modifier = Modifier.fillMaxSize()
             )
 
-            FloatingActionButton(
-                onClick = {
-                    val fileUri = FileUtils.getTempImageUri(context)
-                    val file = java.io.File(context.cacheDir, "temp_image.jpg")
-                    val outputFileOptions = ImageCapture.OutputFileOptions.Builder(file).build()
-
-                    imageCapture?.takePicture(
-                        outputFileOptions,
-                        ContextCompat.getMainExecutor(context),
-                        object : ImageCapture.OnImageSavedCallback {
-                            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                                val finalUri = Uri.fromFile(file).toString()
-                                val encodedUri = java.net.URLEncoder.encode(finalUri, "utf-8")
-                                navController.navigate("add_item?imageUri=$encodedUri")
-                            }
-                            override fun onError(exc: ImageCaptureException) {
-                                Log.e("CameraScreen", "Photo capture failed: ${exc.message}", exc)
-                            }
-                        }
-                    )
-                },
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp).testTag("capture_button")
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp, start = 32.dp, end = 32.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Filled.CameraAlt, contentDescription = "Take Photo")
+                FloatingActionButton(
+                    onClick = {
+                        galleryLauncher.launch(
+                            androidx.activity.result.PickVisualMediaRequest(
+                                androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly
+                            )
+                        )
+                    },
+                    modifier = Modifier.size(56.dp)
+                ) {
+                    Icon(Icons.Filled.Folder, contentDescription = "Gallery")
+                }
+
+                FloatingActionButton(
+                    onClick = {
+                        val fileUri = FileUtils.getTempImageUri(context)
+                        val file = java.io.File(context.cacheDir, "temp_image.jpg")
+                        val outputFileOptions = ImageCapture.OutputFileOptions.Builder(file).build()
+
+                        imageCapture?.takePicture(
+                            outputFileOptions,
+                            ContextCompat.getMainExecutor(context),
+                            object : ImageCapture.OnImageSavedCallback {
+                                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                                    val finalUri = Uri.fromFile(file).toString()
+                                    val encodedUri = java.net.URLEncoder.encode(finalUri, "utf-8")
+                                    if (mode == "search") {
+                                        navController.navigate("visual_search?imageUri=$encodedUri") { popUpTo("home") }
+                                    } else {
+                                        navController.navigate("add_item?imageUri=$encodedUri") { popUpTo("home") }
+                                    }
+                                }
+                                override fun onError(exc: ImageCaptureException) {
+                                    Log.e("CameraScreen", "Photo capture failed: ${exc.message}", exc)
+                                }
+                            }
+                        )
+                    },
+                    modifier = Modifier.size(72.dp).testTag("capture_button")
+                ) {
+                    Icon(Icons.Filled.CameraAlt, contentDescription = "Take Photo", modifier = Modifier.size(32.dp))
+                }
+                
+                Spacer(modifier = Modifier.size(56.dp)) 
             }
         }
     } else {

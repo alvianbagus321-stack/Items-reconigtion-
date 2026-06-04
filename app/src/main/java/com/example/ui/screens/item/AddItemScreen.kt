@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -74,7 +75,7 @@ fun AddItemScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Photos Requirements
-            Text("Photos (Minimum 2 required for AI)", style = MaterialTheme.typography.titleMedium)
+            Text("Photos (1 for Fast Mode, 2+ recommended)", style = MaterialTheme.typography.titleMedium)
             
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(uiState.images) { uri ->
@@ -100,15 +101,56 @@ fun AddItemScreen(
                         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceVariant) {}
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Filled.AddAPhoto, contentDescription = "Add Photo")
-                            Text("${currentSize}/2", style = MaterialTheme.typography.bodySmall)
+                            Text(if(currentSize < 2) "${currentSize}/2" else "$currentSize Added", style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
             }
 
             if (uiState.isAnalyzing) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                Text("Analyzing image with AI...", style = MaterialTheme.typography.bodySmall)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            "Analyzing image with Gemini AI...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            } else if (uiState.description.startsWith("Error")) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Filled.Warning,
+                            contentDescription = "Error",
+                            tint = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            uiState.description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
             }
 
             OutlinedTextField(
@@ -159,16 +201,24 @@ fun AddItemScreen(
             Button(
                 onClick = { viewModel.saveItem(onComplete = { navController.popBackStack("home", false) }) },
                 modifier = Modifier.fillMaxWidth().height(56.dp).testTag("save_button"),
-                enabled = uiState.name.isNotBlank() && uiState.images.size >= 2
+                enabled = uiState.name.isNotBlank() && uiState.images.isNotEmpty()
             ) {
                 Text("Save Item")
             }
-            if (uiState.images.size < 2) {
+            if (uiState.images.isEmpty()) {
                 Text(
-                    text = "Please add at least 2 photos from different angles.",
+                    text = "Please add at least 1 photo.",
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            } else if (uiState.images.size == 1) {
+                Text(
+                    text = "Fast Mode: AI recognition might make mistakes. Add more photos for better accuracy.",
+                    color = MaterialTheme.colorScheme.outline,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
             }
         }

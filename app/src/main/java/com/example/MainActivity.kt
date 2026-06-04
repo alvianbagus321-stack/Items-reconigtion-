@@ -17,6 +17,7 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     com.example.di.AppContainer.init(this)
+    com.example.ui.screens.settings.SettingsManager.init(this)
     enableEdgeToEdge()
     setContent {
       MyApplicationTheme {
